@@ -9,7 +9,7 @@ A GitHub Action checks daily for new releases and automatically updates the vers
 ```nix
 # flake.nix
 {
-  inputs.code-server.url = "github:jgus/code-server";
+  inputs.code-server.url = "github:jgus-org/code-server-flake";
 
   # ...
   environment.systemPackages = [ inputs.code-server.packages.${system}.default ];
@@ -19,7 +19,7 @@ A GitHub Action checks daily for new releases and automatically updates the vers
 Or run directly:
 
 ```sh
-nix run "github:jgus/code-server"
+nix run "github:jgus-org/code-server-flake"
 ```
 
 ## Supported platforms

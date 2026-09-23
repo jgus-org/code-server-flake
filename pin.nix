@@ -1,10 +1,11 @@
 # Auto-managed by `nix run .#update-version`. Manual edits will be overwritten by the next bump.
 {
-  version = "4.138.0";
+  version = "4.122.1";
   hashes = {
-    "x86_64-linux" = "sha256-XWPybF2rwqzSlhC5sn9BOwFqpnAZ4s/N9UAxYl4Y9TU=";
-    "aarch64-linux" = "sha256-++v0sY6XpaSLexBb4BYdQR5UzPtTof+xZzwWUYAk+jA=";
-    "x86_64-darwin" = "sha256-vRpU0D4D07DsdXBfSMOcX2swmjaix+6Hj3Rqbl+aoq4=";
-    "aarch64-darwin" = "sha256-Hs9pmGjmS7kJSn0//KxQu5AzVKMhN9/EAXy5R572tFY=";
+    "x86_64-linux" = "sha256-+hQPJWUFxZse/Pez8py5C7whipl1eIUdHp1XOezoC84=";
+    "aarch64-linux" = "sha256-geZuvRUkTj7hy1SBKKqHWhKDWtC8zaAC/Ye1EalXjqI=";
+    "armv7l-linux" = "sha256-IEIigDkGSlpcMVWadISrOHPQ16BTEm3bZD2MTJAcitM=";
+    "x86_64-darwin" = "sha256-Q7J+PabESBz36f7qXvWjOlj3612b3R1KUjwmidZTg54=";
+    "aarch64-darwin" = "sha256-A1ra3Kx3ZukP+R91kv8WOQPCWqtN4hoda/0DO+poUjc=";
   };
 }

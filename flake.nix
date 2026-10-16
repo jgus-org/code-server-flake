@@ -90,6 +90,7 @@
               text = ''exec ${./update-version.sh} "$@"'';
             };
             update-branches = flake-lib.lib.mkUpdateBranches {
+              minimumTrackingVersion = "4.121.0";
               inherit pkgs source;
               pinSchema = "version-only";
             };

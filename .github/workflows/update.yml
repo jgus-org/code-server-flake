@@ -12,9 +12,6 @@ concurrency:
   group: update
   cancel-in-progress: false
 
-env:
-  MINIMUM_TRACKING_VERSION: "4.121.0"
-
 jobs:
   update:
     runs-on: ubuntu-latest

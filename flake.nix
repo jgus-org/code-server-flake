@@ -4,6 +4,10 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     flake-lib = {
       url = "github:jgus-org/flake-lib/v1";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -11,14 +15,25 @@
     };
   };
 
-  outputs = { self, nixpkgs, flake-utils, flake-lib }:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+      treefmt-nix,
+      flake-lib,
+    }:
     let
       pin = import ./pin.nix;
       inherit (pin) version;
       # The orchestrator's version-only placeholder pin carries no `hashes` (update-version fills it),
       # so default to {} — the flake must still evaluate enough to expose update-version/update-branches.
       hashes = pin.hashes or { };
-      source = { type = "github"; owner = "coder"; repo = "code-server"; };
+      source = {
+        type = "github";
+        owner = "coder";
+        repo = "code-server";
+      };
 
       # nix-system -> upstream tarball os-arch suffix. Static union of every target code-server has shipped.
       platformSuffix = {
@@ -32,11 +47,17 @@
     # Iterate the static platform union so update-version/update-branches always exist (the orchestrator
     # calls them against a hash-less placeholder pin). `code-server` itself is exposed only for the
     # platforms the pinned release actually shipped — upstream drops/adds targets (armv7l gone in 4.123.0).
-    flake-utils.lib.eachSystem (builtins.attrNames platformSuffix)
-      (system:
+    flake-utils.lib.eachSystem (builtins.attrNames platformSuffix) (
+      system:
       let
         pkgs = import nixpkgs { inherit system; };
         suffix = platformSuffix.${system};
+
+        treefmtEval = treefmt-nix.lib.evalModule pkgs {
+          projectRootFile = "flake.nix";
+          programs.nixfmt.enable = true;
+          programs.shfmt.enable = true;
+        };
 
         src = pkgs.fetchurl {
           url = "https://github.com/coder/code-server/releases/download/v${version}/code-server-${version}-${suffix}.tar.gz";
@@ -76,6 +97,10 @@
 
       in
       {
+        formatter = treefmtEval.config.build.wrapper;
+
+        checks.formatting = treefmtEval.config.build.check self;
+
         # code-server only for platforms present in the pin; scripts always (the orchestrator needs them).
         packages =
           pkgs.lib.optionalAttrs (hashes ? ${system}) {
@@ -95,5 +120,6 @@
               pinSchema = "version-only";
             };
           };
-      });
+      }
+    );
 }

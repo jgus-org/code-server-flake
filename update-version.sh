@@ -34,11 +34,11 @@ echo "  target:  ${new_version}"
 
 # nix-system => upstream tarball suffix (os-arch).
 declare -A platforms=(
-  [x86_64-linux]=linux-amd64
-  [aarch64-linux]=linux-arm64
-  [armv7l-linux]=linux-armv7l
-  [x86_64-darwin]=macos-amd64
-  [aarch64-darwin]=macos-arm64
+  ["x86_64-linux"]=linux-amd64
+  ["aarch64-linux"]=linux-arm64
+  ["armv7l-linux"]=linux-armv7l
+  ["x86_64-darwin"]=macos-amd64
+  ["aarch64-darwin"]=macos-arm64
 )
 
 declare -A new_hashes=()
@@ -55,7 +55,7 @@ for nix_system in "${!platforms[@]}"; do
   fi
 done
 
-if [[ -z "${new_hashes[x86_64-linux]:-}" ]]; then
+if [[ -z "${new_hashes["x86_64-linux"]:-}" ]]; then
   echo "error: no linux-amd64 asset for ${new_version}; aborting." >&2
   exit 1
 fi

@@ -14,12 +14,12 @@ pin="${FLAKE_ROOT}/pin.nix"
 repo_owner=coder
 repo_name=code-server
 
-if [[ ! -f "${pin}" ]]; then
+if [[ ! -f ${pin} ]]; then
   echo "error: no pin.nix in ${FLAKE_ROOT}" >&2
   exit 1
 fi
 
-if [[ $# -ge 1 && -n "${1}" ]]; then
+if [[ $# -ge 1 && -n ${1} ]]; then
   new_version="${1#[Vv]}"
   echo "Using requested version: ${new_version}"
 else
@@ -55,26 +55,26 @@ for nix_system in "${!platforms[@]}"; do
   fi
 done
 
-if [[ -z "${new_hashes["x86_64-linux"]:-}" ]]; then
+if [[ -z ${new_hashes["x86_64-linux"]:-} ]]; then
   echo "error: no linux-amd64 asset for ${new_version}; aborting." >&2
   exit 1
 fi
 
 echo "Writing pin.nix..."
 {
-  echo "# Auto-managed by \`nix run .#update-version\`. Manual edits will be overwritten by the next bump."
+  echo '# Auto-managed by `nix run .#update-version`. Manual edits will be overwritten by the next bump.'
   echo "{"
   echo "  version = \"${new_version}\";"
   echo "  hashes = {"
   # Stable platform order; emit only the platforms this release actually shipped.
   for nix_system in x86_64-linux aarch64-linux armv7l-linux x86_64-darwin aarch64-darwin; do
-    if [[ -n "${new_hashes[$nix_system]:-}" ]]; then
+    if [[ -n ${new_hashes[$nix_system]:-} ]]; then
       printf '    "%s" = "%s";\n' "${nix_system}" "${new_hashes[$nix_system]}"
     fi
   done
   echo "  };"
   echo "}"
-} > "${pin}"
+} >"${pin}"
 
 echo "Verifying flake evaluates..."
 nix eval --raw --file "${pin}" version >/dev/null

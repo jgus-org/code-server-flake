@@ -3,7 +3,6 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -11,7 +10,6 @@
     flake-lib = {
       url = "github:jgus-org/flake-lib/v1";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
     };
   };
 
@@ -19,7 +17,6 @@
     {
       self,
       nixpkgs,
-      flake-utils,
       treefmt-nix,
       flake-lib,
     }:
@@ -35,19 +32,17 @@
         repo = "code-server";
       };
 
-      # nix-system -> upstream tarball os-arch suffix. Static union of every target code-server has shipped.
+      # nix-system -> upstream tarball os-arch suffix, for the hosts this flake builds for.
       platformSuffix = {
         "x86_64-linux" = "linux-amd64";
         "aarch64-linux" = "linux-arm64";
-        "armv7l-linux" = "linux-armv7l";
-        "x86_64-darwin" = "macos-amd64";
         "aarch64-darwin" = "macos-arm64";
       };
     in
-    # Iterate the static platform union so update-version/update-branches always exist (the orchestrator
-    # calls them against a hash-less placeholder pin). `code-server` itself is exposed only for the
-    # platforms the pinned release actually shipped — upstream drops/adds targets (armv7l gone in 4.123.0).
-    flake-utils.lib.eachSystem (builtins.attrNames platformSuffix) (
+    # Iterate the standard hosts so update-version/update-branches exist everywhere the orchestrator may
+    # reach (it calls them against a hash-less placeholder pin). `code-server` itself is exposed only for
+    # the hosts the pinned release actually shipped — upstream drops prebuilt targets over time.
+    flake-lib.lib.eachDefaultSystem (
       system:
       let
         pkgs = import nixpkgs { inherit system; };

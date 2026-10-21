@@ -26,3 +26,4 @@ nix run "github:jgus-org/code-server-flake"
 
 - `x86_64-linux`
 - `aarch64-linux`
+- `aarch64-darwin`

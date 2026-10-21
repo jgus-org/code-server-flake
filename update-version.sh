@@ -5,7 +5,7 @@
 #   nix run .#update-version              # latest GitHub release
 #   nix run .#update-version -- 4.121.0   # specific version (no v prefix)
 #
-# Prefetches all 5 platform tarballs and rewrites pin.nix if anything changed.
+# Prefetches the platform tarballs for the hosts the flake builds for and rewrites pin.nix if anything changed.
 
 set -euo pipefail
 
@@ -36,8 +36,6 @@ echo "  target:  ${new_version}"
 declare -A platforms=(
   ["x86_64-linux"]=linux-amd64
   ["aarch64-linux"]=linux-arm64
-  ["armv7l-linux"]=linux-armv7l
-  ["x86_64-darwin"]=macos-amd64
   ["aarch64-darwin"]=macos-arm64
 )
 
@@ -46,8 +44,8 @@ for nix_system in "${!platforms[@]}"; do
   suffix="${platforms[$nix_system]}"
   url="https://github.com/${repo_owner}/${repo_name}/releases/download/v${new_version}/code-server-${new_version}-${suffix}.tar.gz"
   echo "Prefetching ${nix_system} (${suffix})..."
-  # Upstream drops/adds prebuilt targets over time (e.g. linux-armv7l gone as of 4.123.0). A missing
-  # asset (404) means this release doesn't ship that platform — skip it rather than failing the bump.
+  # Upstream drops prebuilt targets over time. A missing asset (404) means this release doesn't ship
+  # that platform — skip it rather than failing the bump.
   if out=$(nix store prefetch-file --json --hash-type sha256 "${url}" 2>/dev/null); then
     new_hashes[$nix_system]=$(jq -r '.hash' <<<"${out}")
   else
@@ -67,7 +65,7 @@ echo "Writing pin.nix..."
   echo "  version = \"${new_version}\";"
   echo "  hashes = {"
   # Stable platform order; emit only the platforms this release actually shipped.
-  for nix_system in x86_64-linux aarch64-linux armv7l-linux x86_64-darwin aarch64-darwin; do
+  for nix_system in x86_64-linux aarch64-linux aarch64-darwin; do
     if [[ -n ${new_hashes[$nix_system]:-} ]]; then
       printf '    "%s" = "%s";\n' "${nix_system}" "${new_hashes[$nix_system]}"
     fi

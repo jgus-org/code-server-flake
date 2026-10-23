@@ -2,23 +2,15 @@
   description = "code-server: VS Code in the browser (coder/code-server).";
 
   inputs = {
+    flake-lib.url = "github:jgus-org/flake-lib/v1";
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    treefmt-nix = {
-      url = "github:numtide/treefmt-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    flake-lib = {
-      url = "github:jgus-org/flake-lib/v1";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs =
     {
       self,
-      nixpkgs,
-      treefmt-nix,
       flake-lib,
+      nixpkgs,
     }:
     let
       pin = import ./pin.nix;
@@ -27,16 +19,16 @@
       # so default to {} — the flake must still evaluate enough to expose update-version/update-branches.
       hashes = pin.hashes or { };
       source = {
-        type = "github";
         owner = "coder";
         repo = "code-server";
+        type = "github";
       };
 
       # nix-system -> upstream tarball os-arch suffix, for the hosts this flake builds for.
       platformSuffix = {
-        "x86_64-linux" = "linux-amd64";
-        "aarch64-linux" = "linux-arm64";
         "aarch64-darwin" = "macos-arm64";
+        "aarch64-linux" = "linux-arm64";
+        "x86_64-linux" = "linux-amd64";
       };
     in
     # Iterate the standard hosts so update-version/update-branches exist everywhere the orchestrator may
@@ -48,25 +40,18 @@
         pkgs = import nixpkgs { inherit system; };
         suffix = platformSuffix.${system};
 
-        treefmtEval = treefmt-nix.lib.evalModule pkgs {
-          projectRootFile = "flake.nix";
-          programs.nixfmt.enable = true;
-          programs.shfmt.enable = true;
+        orgFormatting = flake-lib.lib.mkFormatting {
+          inherit self system;
         };
 
         src = pkgs.fetchurl {
-          url = "https://github.com/coder/code-server/releases/download/v${version}/code-server-${version}-${suffix}.tar.gz";
           hash = hashes.${system} or "";
+          url = "https://github.com/coder/code-server/releases/download/v${version}/code-server-${version}-${suffix}.tar.gz";
         };
 
         code-server = pkgs.stdenv.mkDerivation {
-          pname = "code-server";
-          inherit version src;
-
-          sourceRoot = "code-server-${version}-${suffix}";
-
-          nativeBuildInputs = [ pkgs.makeWrapper ];
-
+          inherit src version;
+          dontFixup = true;
           installPhase = ''
             runHook preInstall
 
@@ -79,23 +64,21 @@
 
             runHook postInstall
           '';
-
-          dontFixup = true;
-
           meta = {
             description = "VS Code in the browser";
             homepage = "https://github.com/coder/code-server";
             mainProgram = "code-server";
             platforms = builtins.attrNames hashes;
           };
+          nativeBuildInputs = [ pkgs.makeWrapper ];
+          pname = "code-server";
+          sourceRoot = "code-server-${version}-${suffix}";
         };
 
       in
       {
-        formatter = treefmtEval.config.build.wrapper;
-
-        checks.formatting = treefmtEval.config.build.check self;
-
+        checks.formatting = orgFormatting.check;
+        formatter = orgFormatting.formatter;
         # code-server only for platforms present in the pin; scripts always (the orchestrator needs them).
         packages =
           pkgs.lib.optionalAttrs (hashes ? ${system}) {
@@ -103,16 +86,16 @@
             default = code-server;
           }
           // {
+            update-branches = flake-lib.lib.mkUpdateBranches {
+              inherit pkgs source;
+              minimumTrackingVersion = "4.121.0";
+              pinSchema = "version-only";
+            };
             # Bespoke build (per-platform prebuilt tarball) + bespoke update-version (prefetches the
             # platform matrix into a keyed hash table); only the per-version-branch orchestrator is shared.
             update-version = pkgs.writeShellApplication {
               name = "update-version";
               text = ''exec ${./update-version.sh} "$@"'';
-            };
-            update-branches = flake-lib.lib.mkUpdateBranches {
-              minimumTrackingVersion = "4.121.0";
-              inherit pkgs source;
-              pinSchema = "version-only";
             };
           };
       }

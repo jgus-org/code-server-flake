@@ -41,10 +41,8 @@ The iteration deliberately covers every standard host so the maintenance outputs
 
 **State.** code-server writes its configuration and extension data under `~/.local/share/code-server` and `~/.config/code-server` unless told otherwise; a service run needs a writable home for its user.
 
-## Licence
-
-`code-server` is MIT, and this flake's own files are MIT (see `LICENSE`). The unpacked upstream tree ships its own `LICENSE`, `ThirdPartyNotices.txt` and bundled assets, which stay under their original terms.
-
 ## Maintenance
 
 Version selection, asset hashes and version branches are generated. See flake-lib's `docs/update-workflows.md`; do not hand-edit `pin.nix`.
+
+See [LICENSE.md](LICENSE.md) for licensing and copyright.
